@@ -42,7 +42,6 @@ module.exports = {
 	find : function(req,res){
 		
 		delete req.params.all()['id'];
-		console.log(req.params.all());
 		Measurement.find(req.params.all(), function(err, all) {
 			res.json(all);
 		});
