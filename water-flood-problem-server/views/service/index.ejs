@@ -1,0 +1,341 @@
+<!DOCTYPE html> 
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    
+    <meta charset="utf-8">
+    <title>Water problem</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <style>
+      html, body, #map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+    </style>
+    <!--<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>-->
+    <script type="text/javascript"
+	     src="https://maps.googleapis.com/maps/api/js?libraries=visualization&sensor=false">
+      // true_or_false
+    </script>
+    
+    <script type="text/javascript"
+      src="jquery-1.11.2.min.js">
+    </script>
+
+
+    <script type = "text/javascript">
+	var markers = [];
+	var heatmapdata = [];
+	var dates = [];
+	var heatmap;
+	var ip = "";
+	var result = [];
+	var controlText;
+	var infowindows = [];
+
+  var GET_ALL_DATES_URL = 'http://192.168.1.2:1337/service/getAllDates';
+  var GET_ALL_MEASUREMENTS_URL = 'http://192.168.1.2:1337/service/getLatestMeasurements';
+
+function initialize() {
+	var mapOptions = {
+    zoom: 6,
+    center: new google.maps.LatLng(33.972093, -117.973952), // center maps
+  	mapTypeId: google.maps.MapTypeId.ROADMAP //HYBRID
+	};
+	var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
+  console.log('jq', $);
+
+	
+	$.ajax({
+        url : GET_ALL_DATES_URL,
+        type : 'get',
+        //dataType : 'json',//or json
+		//data: 
+        //timeout : 5000,
+        cache : false,
+        //async : true,
+        success : function(data) { 
+          console.log('will ping server ', data);
+      			dates = data;       
+            /*dates =  [
+                  // requested date                         real date of measurement
+                    ["4/4/15"],  
+                    ["5/4/15"] 
+                  ];*/
+            
+            // TODO : colors
+            var gradient = [
+                'rgba(0, 255, 255, 0)',
+                'rgba(0, 255, 255, 1)',
+                'rgba(0, 191, 255, 1)',
+                'rgba(0, 127, 255, 1)',
+                'rgba(0, 63, 255, 1)',
+                'rgba(0, 0, 255, 1)',
+                'rgba(0, 0, 223, 1)',
+                'rgba(0, 0, 191, 1)',
+                'rgba(0, 0, 159, 1)',
+                'rgba(0, 0, 127, 1)',
+                'rgba(63, 0, 91, 1)',
+                'rgba(127, 0, 63, 1)',
+                'rgba(191, 0, 31, 1)',
+                'rgba(255, 0, 0, 1)'
+            ];
+            heatmap = new google.maps.visualization.HeatmapLayer({
+                gradient: gradient,
+                radius: 50,
+                maxIntensity: 100
+                //dissipating: false
+              });
+              
+              var slideBarControl = document.createElement('input');
+            
+              // var slideBar = new SlideBarControl(slideBarControl, map, dates);
+              new SlideBarControl(slideBarControl, map, dates);
+
+              slideBarControl.index = 1;
+              map.controls[google.maps.ControlPosition.BOTTOM_CENTER].push(slideBarControl);
+            
+              var textControlDiv = document.createElement('div');
+              var textControl = new TextControl(textControlDiv, map);
+            
+              textControlDiv.index = 2;
+              map.controls[google.maps.ControlPosition.BOTTOM_CENTER].push(textControlDiv);
+              
+              $.ajax({
+                  url : GET_ALL_MEASUREMENTS_URL,
+                  type : 'get',
+                  dataType : 'json',//or json
+              data: dates,
+                  //timeout : 5000,
+                  cache : false,
+                  //async : true,
+                  success : function(data) { 
+                          result = data; 
+                          // console.log('res from server', result);
+
+
+                            /*
+                            result =  [
+                                // requested date                         real date of measurement
+                                  ["4/4/15" , 100, 42.5047926,  27.4626361, "4/4/15", "nqkva danna 29"],  
+                                  ["5/4/15" , 100, 42.5047926,  27.4626361, "4/4/15", "nqkva danna 30"] 
+                                ];*/
+                          
+                          
+                          /// --- comment was from here
+                          fillMap(result, map, dates);
+                          var d = dates[0].split('/'); // dates[0][0]
+                          controlText.innerHTML = d[0] + "." + d[1] + "." + d[2];
+                          
+                          setHeatmap(map,heatmap, heatmapdata[0]);
+                          heatmap.setMap(map);
+                          //clearMarkers();
+
+                  },
+                  error : function(msg, cause) {
+                      console.log(msg);
+                  }
+              });
+    
+ 
+        },
+        error : function(msg, cause) {
+			     console.log(msg);
+        }
+    });
+}
+
+function SlideBarControl(slideBarControl, map, minMax) {
+  slideBarControl.type = 'range';
+  slideBarControl.min = 0;
+  slideBarControl.value = 0;
+  slideBarControl.max = minMax.length-1;
+  
+
+
+
+  // Set CSS for the control border
+  var controlUI = document.createElement('div');
+  controlUI.style.backgroundColor = '#fff';
+  controlUI.style.border = '2px solid #fff';
+  controlUI.style.borderRadius = '3px';
+  controlUI.style.boxShadow = '0 2px 6px rgba(0,0,0,.3)';
+  controlUI.style.cursor = 'pointer';
+  controlUI.style.marginBottom = '22px';
+  controlUI.style.textAlign = 'center';
+  controlUI.title = 'Click to recenter the map';
+  slideBarControl.appendChild(controlUI);
+
+
+
+
+
+  // Set CSS for the control interior
+  // var controlText = document.createElement('div');
+  // controlText.id = 'slider';
+  // controlText.style.color = 'rgb(25,25,25)';
+  // controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
+  // controlText.style.fontSize = '16px';
+  // controlText.style.lineHeight = '38px';
+  // controlText.style.paddingLeft = '5px';
+  // controlText.style.paddingRight = '5px';
+  // controlText.innerHTML = 'Center Map';
+  // controlUI.appendChild(controlText);
+
+
+
+
+
+  /// --- comment was up to here
+
+  google.maps.event.addDomListener(slideBarControl, 'input', function() {
+	  setHeatmap(map, heatmap, heatmapdata[slideBarControl.value]);
+    var d = dates[slideBarControl.value].split('/');
+    controlText.innerHTML = d[0] + "." + d[1] + "." + d[2];
+  });
+
+}
+
+function clearMarkers() {
+  for (var i = 0; i < markers.length; i++) {
+    markers[i].setMap(null);
+  }
+}
+function fillMap(result, map, dates)
+{
+
+    // console.log('dates', dates);
+    // console.log('result', result);
+	for(var j =0;j<dates.length;j++)
+	{
+
+		var arr = result.filter(function(elementFromServer){
+      var dateInElement = elementFromServer[0];
+      var currentDate = dates[j];
+			return dateInElement === currentDate;
+		});
+
+    
+		var heat = [];
+    for (var i=0; i<arr.length; i++) {
+            
+    			if(j==0) // set marker only for the first date returned by the server
+    			{
+
+                // lat and long from server
+                // arr[i] - represents measurement from i-th date 
+        				var point = new google.maps.LatLng(parseFloat(arr[i][2]),parseFloat(arr[i][3]));
+        				//var title = parts[0];
+        				
+        				var marker = new google.maps.Marker({
+        					position: point
+        					
+        					//title: 'Hello World!'
+        				});
+        				marker.setMap(map);
+        				markers.push(marker);
+        				var content = '<h2>' + arr[i][4] + '</h2><br />' + arr[i][5]; // title -4, next text 5
+        				var infowindow = new google.maps.InfoWindow({
+        				  content: content,
+                  // position: location,
+        			  });
+                // console.log(content);
+        			  infowindows[i] = infowindow;
+        			  google.maps.event.addListener(marker, 'click', function(event) {
+                  // infowindow is the last one
+        					
+                  // console.log(event);
+                  // console.log(event.latLng);
+                  infowindow.open(map,marker);
+
+        			  });
+                // console.log(marker);
+
+
+
+                // google.maps.event.addListener(map, 'click', function(event) {
+                //   placeMarker(event.latLng);
+                //   });
+
+                // function placeMarker(location) {
+                //   var marker = new google.maps.Marker({
+                //     position: location,
+                //     map: map,
+                //   });
+                //   var infowindow = new google.maps.InfoWindow({
+                //     content: 'Latitude: ' + location.lat() +
+                //     '<br>Longitude: ' + location.lng()
+                //   });
+                //   infowindow.open(map,marker);
+                // }
+
+
+
+
+    				
+    			}
+    			//console.log(j + "-"+i);
+    			heat[i] = {
+                location: new google.maps.LatLng(arr[i][2], arr[i][3]),
+                weight: arr[i][1]///50
+          };
+    		  if(i==arr.length-1)
+      		{
+          			map.setCenter(point);
+          			map.setZoom(13);
+          }	
+
+	  }
+	  heatmapdata[j]=heat;
+	   //console.log(heatmapdata[j]);
+	}
+	  //alert(heatmapdata);
+}
+function setHeatmap(map, heatmap, _heatmapdata)
+{
+		//heatmap.setMap(null);
+		heatmap.setData(_heatmapdata);
+		//heatmap.setMap(map);
+}
+// TODO remove this function
+function TextControl(controlDiv, map) {
+
+  // Set CSS for the control border
+  var controlUI = document.createElement('div');
+  controlUI.style.backgroundColor = '#fff';
+  controlUI.style.border = '2px solid #fff';
+  controlUI.style.borderRadius = '3px';
+  controlUI.style.boxShadow = '0 2px 6px rgba(0,0,0,.3)';
+  //controlUI.style.cursor = 'pointer';
+  controlUI.style.marginBottom = '22px';
+  controlUI.style.textAlign = 'center';
+  //controlUI.title = 'Click to recenter the map';
+  controlDiv.appendChild(controlUI);
+
+  // Set CSS for the control interior
+  controlText = document.createElement('div');
+  controlText.id = 'slider';
+  controlText.style.color = 'rgb(25,25,25)';
+  controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
+  controlText.style.fontSize = '12px';
+  controlText.style.lineHeight = '38px';
+  controlText.style.paddingLeft = '5px';
+  controlText.style.paddingRight = '5px';
+  //controlText.innerHTML = 'Center Map';
+  controlUI.appendChild(controlText);
+}
+
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+
+    </script>
+
+
+  </head>
+  <body>
+    <div id="map-canvas"></div>
+  </body>
+</html>
