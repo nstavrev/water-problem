@@ -17,6 +17,9 @@ import org.jsoup.select.Elements;
 public class Main {
 
 	
+	private static final String HTTP_WATERDATA_USGS_GOV = "http://waterdata.usgs.gov";
+	private static final String HTTP_WATERWATCH_USGS_GOV = "http://waterwatch.usgs.gov";
+
 	private static String[][] iterateTable(String siteNo, String startDate,
 			String endDate) throws IOException {
 		Document document = Jsoup
@@ -64,34 +67,40 @@ public class Main {
 	}
 
 	public static void main(String[] args) {
-		Parser parser = new ParserImpl("http://waterwatch.usgs.gov", "http://waterdata.usgs.gov");
+		Parser parser = new ParserImpl(HTTP_WATERWATCH_USGS_GOV, HTTP_WATERDATA_USGS_GOV);
 		
 		try {
 			List<String> allStates = parser.getAllStates();
+			System.out.println(Arrays.toString(allStates.toArray()));
 			List<String> allMeasurements = parser.getAllMeasurements();
-			List<String> allStationNumbers = parser.getAllStationNumbers(allStates.get(1), allMeasurements.get(1));
-			parser.crawlData(allStates.get(1), allStationNumbers.get(1), parser.getAllParameters(allStates.get(1), allStationNumbers.get(1)));
-//			for (String state : allStates) {
-//				if(state.equals("us")){
-//					continue;
-//				}
-//				for (String measurement : allMeasurements) {
-//					List<String> allStationNumbers = parser.getAllStationNumbers(state, measurement);
-//					for (String stationNumber : allStationNumbers) {
-//						List<String> allParameters = parser.getAllParameters(state, stationNumber);
-//
-//						Map<String, Map<String, String>> crawledData = parser.crawlData(state, stationNumber, allParameters);
-//						System.out.println(crawledData);
-//					}
-//				}
-//			}
+			System.out.println(Arrays.toString(allMeasurements.toArray()));
+//			List<String> allStationNumbers = parser.getAllStationNumbers(allStates.get(1), allMeasurements.get(1));
+//			parser.crawlData(allStates.get(1), allStationNumbers.get(1), parser.getAllParameters(allStates.get(1), allStationNumbers.get(1)));
+				for (String state : allStates) {
+					if(state.equals("us")){
+						continue;
+					}
+					for (String measurement : allMeasurements) {
+						List<String> allStationNumbers = parser.getAllStationNumbers(state, measurement);
+						for (String stationNumber : allStationNumbers) {
+							List<String> allParameters = parser.getAllParameters(state, stationNumber);
+	
+//							Map<String, Map<String, String>> crawledData = parser.crawlData(state, stationNumber, allParameters);
+							//						System.out.println(crawledData);
+							System.out.println(((ParserImpl)parser).getLocationAsString(state, stationNumber));
+						}
+					}
+					System.out.println(state);
+					
+				}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		} 
+//		catch (ParseException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 
 	}
 

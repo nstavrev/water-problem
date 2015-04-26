@@ -158,12 +158,15 @@ function fillMap(result, map, dates)
     // console.log('result', result);
   for(var j =0;j<dates.length;j++)
   {
+    
 
     var arr = result.filter(function(elementFromServer){
       var dateInElement = elementFromServer[0];
+      // console.log("el from server " + elementFromServer[0], "date[j] = " + dates[j]);
       var currentDate = dates[j];
       return dateInElement === currentDate;
     });
+    console.log(arr);
 
   var heat = [];
     for (var i=0; i<arr.length; i++) {

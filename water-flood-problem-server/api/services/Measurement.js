@@ -1,17 +1,17 @@
 module.exports = {
-	create: function (measurement){
-	this.lat = measurement.latitude;
-	this.longitude = measurement.longitude;
+	create: function (meas){
+	this.lat = meas.latitude;
+	this.longitude = meas.longitude;
 	this.date = "";
 	this.waterQuality = 0.0;
-	this.measurements = measurement;
+	this.measurements = meas;
 
 	this.calculateQuality = function () {
 		var result = 0.0;
 		/*
 		 * if(!this.measurements.containsKey("ph")) { result += 8 * 0.11; }
 		 */
-	
+	// console.dir(result);
 		var keys = Object.keys(this.measurements);
 		if (keys.indexOf("Dis- solved oxygen, mg/L,") < 0) {
 			result += 5 * 0.17;
@@ -29,17 +29,19 @@ module.exports = {
 			 * phQuality(phValue) * 0.11; }
 			 */
 
-			if (measurement === "Dis- solved oxygen, mg/L,") {
+			if (measurement === "Dis- solved oxygen, mg/L," && !!this.measurements[measurement]) {
 				var str = this.measurements[measurement];
-				result += this.oxygenQuality(parseFloat(str)) * 0.17;
+				result += this.oxygenQuality(parseFloat(str.replace("P", ""))) * 0.17;
 			}
 
-			if (measurement === "Temper- ature, water, deg C,") {
+			if (measurement === "Temper- ature, water, deg C," && !!this.measurements[measurement]) {
 				var str = this.measurements[measurement];
-				result += this.tempQuality(parseFloat(str)) * 0.11;
+				result += this.tempQuality(parseFloat(str.replace("P", ""))) * 0.11;
 			}
 		}
-
+		if (! result) {
+		console.log("result:" + result);			
+		}
 		return result;
 	};
 
@@ -65,6 +67,7 @@ module.exports = {
 		} else {
 			index = 10 - (x - 10);
 		}
+		console.dir(index);
 		return index;
 	};
 

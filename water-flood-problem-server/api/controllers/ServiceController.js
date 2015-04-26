@@ -6,7 +6,7 @@
  */
 
 
-
+var LIMIT = 50;
  
 
 
@@ -75,7 +75,8 @@ module.exports = {
 	    //       ["25/4/2015" , 100, 42.5047926,  27.4626361, "25/4/2015", "1nqkva danna 29"],
 	    // ];
 	    //TODO http://localhost:8080/WaterServer/run?startDate=&endDate=
-		Measurement.find({} , function (err, measurements) {
+		// Measurement.find().limit(LIMIT).exec(function (err, measurements) {
+		Measurement.find({sort : { "Date / Time" : -1 } },function (err, measurements) {
 			if(err) {
 				return res.json({err : err});
 
@@ -86,7 +87,7 @@ module.exports = {
 			measurements.forEach(function (measurement) {
 				var measDate = new Date(measurement['Date / Time']);
 				console.dir(measurement['Date / Time']);
-				if(measDate >= startDate &&  measDate <= endDate) {
+				if(measDate >= startDate &&  measDate <= Date.now()) {
 					measurement.waterQuality = meas.create(measurement).calculateQuality() * 100;						
 					var r = [measurement['Date / Time'], measurement.waterQuality, measurement.latitude, measurement.longitude];
 					for (var i in measurement) {
@@ -106,7 +107,8 @@ module.exports = {
   	getAllDates: function (req, res) {
     	res.setHeader("Access-Control-Allow-Origin", "*");
     	console.log('get all dates');
-    	Measurement.find({ select: ['Date / Time']}, function(err, dates){
+    	// Measurement.find({ select: ['Date / Time']}).limit(LIMIT).exec(function(err, dates){
+    	Measurement.find({ sort : { "Date / Time" : -1 } }, function(err, dates){
     		var result = [];
 			dates.forEach(function(date){
 				if (result.indexOf(date['Date / Time']) < 0) {

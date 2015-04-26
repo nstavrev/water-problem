@@ -103,6 +103,33 @@ public class ParserImpl implements Parser {
 		return null;
 	}
 
+	public Map<String, String> getLocationAsString(String state, String stationNumber)
+			throws IOException {
+		String url = "http://waterdata.usgs.gov/" + state
+				+ "/nwis/nwismap/?site_no=" + stationNumber + "&agency_cd=USGS";
+		Document document = this.getDocument(url);
+
+		Elements divs = document.select("div");
+
+		String location = "";
+
+		for (Element div : divs) {
+			if (div.text().contains("Latitude")) {
+				location = div.text();
+				break;
+			}
+		}
+		
+		if(!"".equals(location)){
+			String[] splitted = location.split(",");
+			Map<String, String> result = new HashMap<String, String>();
+			result.put("latitude", splitted[0]);
+			result.put("longtitude", splitted[1]);
+			return result;
+		}
+		return null;
+	}
+
 	@Override
 	public List<String> getAllStates() throws IOException {
 		return this.getSelectOptionsByIndex(0);
