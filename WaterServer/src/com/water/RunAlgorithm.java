@@ -44,7 +44,7 @@ public class RunAlgorithm extends HttpServlet {
 		switch (algName) {
 			case "linearRegression": {
 				alg = new SimpleRegression();
-				double[] prediction = runAlgorithm(alg, startDate, endDate);
+				double[] prediction = runAlgorithm(alg, endDate);
 				returnResponse(response, prediction); // [ 34.56  , 3435.5656 ]
 			}
 			default : {
@@ -74,11 +74,11 @@ public class RunAlgorithm extends HttpServlet {
 		return gson.toJson(prediction);
 	}
 
-	private double[] runAlgorithm(Algorithm alg, Date startDate, Date endDate) {
+	private double[] runAlgorithm(Algorithm alg, Date endDate) {
 		// TODO impl
 		alg.setData(null);
-		double[] response = alg.predict(startDate, endDate);
-		return response;
+		//double[] response = alg.predict(endDate);
+		return null;
 	}
 
 }
