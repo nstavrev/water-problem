@@ -40,16 +40,18 @@ module.exports = {
 
 	create: function (req, res) {
      console.log(req.params.all());
-     Location.create(req.params.all(), function(err, location){
+     Service.create(req.params.all(), function(err, location){
      	if(err) {
      		res.json({err : err})
      	}
      	res.json(location)
      });
 
-     Location.find({}, function(err,locations){
-     	console.log(locations)
+     Service.remove({}, function(err, result){
+     	res.send(result);
      });
+
+    
      
 	},
 
