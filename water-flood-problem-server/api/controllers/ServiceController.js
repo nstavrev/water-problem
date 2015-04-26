@@ -60,8 +60,10 @@ module.exports = {
 	getLatestMeasurements: function (req, res) {
 	    res.setHeader("Access-Control-Allow-Origin", "*");
 	    console.log('get all measurements');
-	    var startDate = new Date(req.params.all()['startDate']);
-	    var endDate = new Date(req.params.all()['endDate']);
+	    var startDate = new Date(req.params.all()['date']);
+	    startDate.setMonth(startDate.getMonth() - 1);
+	    var endDate = new Date(req.params.all()['date']);
+	    endDate.setMonth(endDate.getMonth() + 1);
 
 	    // var result = [
 	    //   // requested date                         real date of measurement
@@ -78,23 +80,21 @@ module.exports = {
 				return res.json({err : err});
 
 			}
-
+			var meas = require('../services/Measurement');
 			var result = [];
 
 			measurements.forEach(function (measurement) {
 				var measDate = new Date(measurement['Date / Time']);
-				if(measDate >= startDate &&  measDate <= new Date()) {
-					//TODO calculate quality
-					measurement.waterQuality = Math.random() * 100;
+				console.dir(measurement['Date / Time']);
+				if(measDate >= startDate &&  measDate <= endDate) {
+					measurement.waterQuality = meas.create(measurement).calculateQuality() * 100;						
 					var r = [measurement['Date / Time'], measurement.waterQuality, measurement.latitude, measurement.longitude];
 					for (var i in measurement) {
 						if(i == "id" || i == "inspect") break;
 						r.push(i + ' = ' + measurement[i]);
 					}
 					result.push(r);
-
 				} 
-				
 			});
 
 			return res.json(result);
