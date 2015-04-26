@@ -8,10 +8,13 @@
 module.exports = {
 
   attributes: {
-  	location :{
-  		type: 'float',
-	 	required: true,
-  	}  	
+  	associationProp: {
+      model: 'Location'
+    },
+    date : {
+    	required : true,
+    	type : "date"
+    }	
   }
 };
 

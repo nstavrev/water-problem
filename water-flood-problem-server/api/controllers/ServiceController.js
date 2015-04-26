@@ -42,8 +42,8 @@ module.exports = {
      console.log(req.params.all());
      Service.create(req.params.all(), function(err, location){
      	if(err) {
-     		res.json({err : err})
-     		return;
+     		return res.json({err : err})
+     	
      	}
      	res.json(location)
      });
@@ -60,7 +60,8 @@ module.exports = {
 	getLatestMeasurements: function (req, res) {
 	    res.setHeader("Access-Control-Allow-Origin", "*");
 	    console.log('get all measurements');
-
+	    var startDate = new Date(req.params.all()['startDate']);
+	    var endDate = new Date(req.params.all()['endDate']);
 
 	    // var result = [
 	    //   // requested date                         real date of measurement
@@ -71,37 +72,53 @@ module.exports = {
 	    //       ["21/4/2015" , 80, 42.5047926,  27.4626361, "11/4/2015", "1nqkva danna 29"],
 	    //       ["25/4/2015" , 100, 42.5047926,  27.4626361, "25/4/2015", "1nqkva danna 29"],
 	    // ];
-		Measurement.where({ 'Date / Time' : { '>=': startDate,  '<=': endDate} }, function (err, measurements) {
+	    //TODO http://localhost:8080/WaterServer/run?startDate=&endDate=
+		Measurement.find({} , function (err, measurements) {
+			if(err) {
+				return res.json({err : err});
+
+			}
+
 			var result = [];
-			measurement.forEach(function (measurement) {
-				var r = [measurement.date, measurement.waterQuality, measurement.latitude, measuement.longitude, measuement.date];
-				for (var i in measurement) {
-					r.push(i + ' = ' + measurement[i]);
-				}
-				result.push(r);
+
+			measurements.forEach(function (measurement) {
+				var measDate = new Date(measurement['Date / Time']);
+				if(measDate >= startDate &&  measDate <= new Date()) {
+					//TODO calculate quality
+					measurement.waterQuality = 20;
+					var r = [measurement['Date / Time'], measurement.waterQuality, measurement.latitude, measurement.longitude];
+					for (var i in measurement) {
+						if(i == "id" || i == "inspect") break;
+						r.push(i + ' = ' + measurement[i]);
+					}
+					result.push(r);
+
+				} 
+				
 			});
+
 			return res.json(result);
 		});
 
-	    return res.json(result);
 	},
 
 	// http://localhost:1338/measurement/getalldates
   	getAllDates: function (req, res) {
     	res.setHeader("Access-Control-Allow-Origin", "*");
     	console.log('get all dates');
-
-		Measurement.find({ }, {fields : {'Date / Time'}},  function (err, dates) {
-			var res = [];
-			dates.forEach(date) {
-				if (res.indexOf(date) < 0) {
-					res.push (date);
+    	Measurement.find({ select: ['Date / Time']}, function(err, dates){
+    		var result = [];
+			dates.forEach(function(date){
+				if (result.indexOf(date['Date / Time']) < 0) {
+					result.push (date['Date / Time']);
 				}
-			}
-		});
+			});
+			return res.json(result);
+    	});
+	
 
     	// [["25/4/2015 18:34 EDT", "25/5/2015 18:34 EDT"] 
-    	return res.json(dates);
+    	
   	},
 
   	index: function (req, res) {
