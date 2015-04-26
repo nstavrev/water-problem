@@ -2,12 +2,13 @@ package com.water;
 
 import java.util.Date;
 import java.util.Map;
-import java.util.Map.Entry;
+
+import org.apache.commons.math3.util.Pair;
 
 public interface Algorithm {
 
-	void setData(DataSet data);
+	void setData(DataSet dSet);
 
-	Map<Entry<Double, Double>, Double> predict(Date endDate);
+	Map<Pair<Double, Double>, Map<Date, Double> > predict(Date endDate);
 
 }

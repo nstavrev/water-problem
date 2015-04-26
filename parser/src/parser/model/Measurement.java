@@ -24,6 +24,14 @@ public class Measurement {
 
 	}
 
+	public Measurement(Date date, double waterQuality, double latitude, double longitude){
+	
+		setDate(date);
+		setQuality(waterQuality);
+		setLat(latitude);
+		setLongitude(longitude);
+	}
+	
 	public double calculateQuality() {
 
 		double result = 0.0;
