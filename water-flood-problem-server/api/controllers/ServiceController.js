@@ -43,6 +43,7 @@ module.exports = {
      Service.create(req.params.all(), function(err, location){
      	if(err) {
      		res.json({err : err})
+     		return;
      	}
      	res.json(location)
      });
@@ -60,34 +61,6 @@ module.exports = {
 	    res.setHeader("Access-Control-Allow-Origin", "*");
 	    console.log('get all measurements');
 
-			// var measurements = [
-			// 	// {
-			// 	// 	point: {
-			// 			// lat, long
-			// 	// 	},
-			// 	// 	measurements: [ // for each date
-			// 	// 		{ -- represents date at the same index
-			// 				// lat, long, temp , date, etc, waterQ
-			// 	// 		}
-			// 	// 	]
-			// 	// }
-			// ];
-		var result = [];
-		for (var i = 0; i < measurements.length; i++) {
-			var allMeasurements = measurements[i].measurements;
-			allMeasurements.forEach(function (measurement) {
-				result.push( [
-					measurement.date,
-					measurement.waterQuality,
-					measurement.latitude,
-					measurement.longitude,
-					measurement.date,
-					getPinString(measurement),
-				] );
-			});
-		}
-
-
 
 	    // var result = [
 	    //   // requested date                         real date of measurement
@@ -98,6 +71,17 @@ module.exports = {
 	    //       ["21/4/2015" , 80, 42.5047926,  27.4626361, "11/4/2015", "1nqkva danna 29"],
 	    //       ["25/4/2015" , 100, 42.5047926,  27.4626361, "25/4/2015", "1nqkva danna 29"],
 	    // ];
+		Measurement.where({ 'Date / Time' : { '>=': startDate,  '<=': endDate} }, function (err, measurements) {
+			var result = [];
+			measurement.forEach(function (measurement) {
+				var r = [measurement.date, measurement.waterQuality, measurement.latitude, measuement.longitude, measuement.date];
+				for (var i in measurement) {
+					r.push(i + ' = ' + measurement[i]);
+				}
+				result.push(r);
+			});
+			return res.json(result);
+		});
 
 	    return res.json(result);
 	},
@@ -107,8 +91,16 @@ module.exports = {
     	res.setHeader("Access-Control-Allow-Origin", "*");
     	console.log('get all dates');
 
+		Measurement.find({ }, {fields : {'Date / Time'}},  function (err, dates) {
+			var res = [];
+			dates.forEach(date) {
+				if (res.indexOf(date) < 0) {
+					res.push (date);
+				}
+			}
+		});
 
-    	// [["25/4/2015", "25/5/2015"] 
+    	// [["25/4/2015 18:34 EDT", "25/5/2015 18:34 EDT"] 
     	return res.json(dates);
   	},
 
