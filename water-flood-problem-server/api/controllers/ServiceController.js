@@ -85,7 +85,7 @@ module.exports = {
 				var measDate = new Date(measurement['Date / Time']);
 				if(measDate >= startDate &&  measDate <= new Date()) {
 					//TODO calculate quality
-					measurement.waterQuality = 20;
+					measurement.waterQuality = Math.random() * 100;
 					var r = [measurement['Date / Time'], measurement.waterQuality, measurement.latitude, measurement.longitude];
 					for (var i in measurement) {
 						if(i == "id" || i == "inspect") break;

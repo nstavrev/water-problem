@@ -128,7 +128,7 @@ public class ParserImpl implements Parser {
 		Elements rows = table.select("tr");
 
 		List<String> stationNumbers = new ArrayList<String>();
-
+		
 		for (int i = 0; i < rows.size(); i++) {
 			Elements data = rows.get(i).select("td");
 
@@ -178,87 +178,90 @@ public class ParserImpl implements Parser {
 			ParseException {
 
 		// String[][] mainArr = new String[rows.size()][];
-		Map<String, Map<String, String>> mainArr = new HashMap<String, Map<String, String>>();
+		Map<String, Map<String, String>> mainArr = new ConcurrentHashMap<String, Map<String, String>>();
+		
+		ParserImpl that = this;
+		
+		ExecutorService service = Executors.newFixedThreadPool(10);
+		service.execute(new Runnable() {
 
-		// ExecutorService service = Executors.newFixedThreadPool(10);
-		// service.execute(new Runnable() {
-		//
-		// @Override
-		// public void run() {
-		//
-		//
-		// }
-		// });
+			@Override
+			public void run() {
+				StringBuilder url = new StringBuilder(secondSiteUrl + "/" + state
+						+ "/nwis/uv?format=html&site_no=" + stationNumber);
+				System.out.println("asdsad " + url);
 
-		StringBuilder url = new StringBuilder(secondSiteUrl + "/" + state
-				+ "/nwis/uv?format=html&site_no=" + stationNumber);
-		System.out.println("asdsad " + url);
-
-		for (String param : parameters) {
-			url.append("&cb_" + param);
-		}
-
-		url.append("&period=");
-		System.out.println(url.toString());
-		Document document;
-		try {
-			document = this.getDocument(url.toString());
-
-			Element table = this.getTableByIndex(document, 1);
-
-			Elements tbody = table.select("tbody");
-
-			Elements metrics = table.select("thead");
-			Element metricsRow = metrics.select("tr").get(0);
-
-			Elements ths = metricsRow.select("th");
-			System.out.println(ths);
-
-			Elements rows = tbody.select("tr");
-
-			// String[][] mainArr = new String[rows.size()][];
-
-			// String date = "";
-			for (int i = 0; i < rows.size(); i++) {
-				Map<String, String> map = new HashMap<String, String>();
-
-				String date = rows.get(i).select("td").get(0).text();
-
-				Elements data = rows.get(i).select("td");
-
-				// String[] arr = new String[data.size()];
-				for (int j = 0; j < data.size(); j++) {
-					// arr[j] = data.get(j).text();
-					String key = ths.get(j).text();
-					String val = data.get(j).text();
-					map.put(key, val);
+				for (String param : parameters) {
+					url.append("&cb_" + param);
 				}
 
-				// mainArr[i] = arr;
-				// mainArr.put(i, arr);
+				url.append("&period=");
+				System.out.println(url.toString());
+				Document document;
+				try {
+					document = that.getDocument(url.toString());
 
-			
-				// http://192.168.1.2:1337/measurement/create?lat=:measurement.getLat()&long=measurement.getLong()
-				// http://192.168.3.146:1337/measurement/create?latitude=43.0032&longitude=23.23232&temperature=18&airRelativeHumidity=23&atmosphericPressure=989.34&soilHumidity=789.85&luminance=33838&waterQuality=97
-				Map<String, Double> location = this.getLocation(state,
-						stationNumber);
-				
-				if(location != null) {
-					Measurement measurement = new Measurement(location.get("latitude"), location.get("longtitude"),
-							dateFormat.parse(date), map);
+					Element table = that.getTableByIndex(document, 1);
+
+					Elements tbody = table.select("tbody");
+
+					Elements metrics = table.select("thead");
+					Element metricsRow = metrics.select("tr").get(0);
+
+					Elements ths = metricsRow.select("th");
+					System.out.println(ths);
+
+					Elements rows = tbody.select("tr");
+
+					// String[][] mainArr = new String[rows.size()][];
+
+					// String date = "";
+					for (int i = 0; i < rows.size(); i++) {
+						Map<String, String> map = new HashMap<String, String>();
+
+						String date = rows.get(i).select("td").get(0).text();
+
+						Elements data = rows.get(i).select("td");
+
+						// String[] arr = new String[data.size()];
+						for (int j = 0; j < data.size(); j++) {
+							// arr[j] = data.get(j).text();
+							String key = ths.get(j).text();
+							String val = data.get(j).text();
+							map.put(key, val);
+						}
+
+						// mainArr[i] = arr;
+						// mainArr.put(i, arr);
+
 					
-					System.out.println(measurement.getUrl());
-					Utils.sendRequest(measurement.getUrl());
-				} else {
-					System.err.println("locatio not found");
+						// http://192.168.1.2:1337/measurement/create?lat=:measurement.getLat()&long=measurement.getLong()
+						// http://192.168.3.146:1337/measurement/create?latitude=43.0032&longitude=23.23232&temperature=18&airRelativeHumidity=23&atmosphericPressure=989.34&soilHumidity=789.85&luminance=33838&waterQuality=97
+						Map<String, Double> location = that.getLocation(state,
+								stationNumber);
+						
+						if(location != null) {
+							Measurement measurement = new Measurement(location.get("latitude"), location.get("longtitude"),
+									that.dateFormat.parse(date), map);
+							
+							System.out.println(measurement.getUrl());
+							Utils.sendRequest(measurement.getUrl());
+						} else {
+							System.err.println("locatio not found");
+						}
+
+						mainArr.put(date, map);
+					}
+				} catch (IOException e) {
+					System.exit(9);
+				} catch (ParseException e) {
+					e.printStackTrace();
 				}
 
-				mainArr.put(date, map);
 			}
-		} catch (IOException e) {
-			System.exit(9);
-		}
+		});
 
+		
 		//
 		// int i = 0;
 		// for (String[] strings : mainArr) {

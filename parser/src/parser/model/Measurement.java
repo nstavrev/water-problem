@@ -86,7 +86,7 @@ public class Measurement {
 	}
 	
 	public String getUrl() {
-		StringBuilder serverUrl = new StringBuilder("http://192.168.1.2:1337/measurement/create?latitude=" + this.lat + "&longitude=" + this.longitude);
+		StringBuilder serverUrl = new StringBuilder("http://localhost:1337/measurement/create?latitude=" + this.lat + "&longitude=" + this.longitude);
 		for(String key : this.measurements.keySet()){
 			serverUrl.append("&" + Utils.encodeURIComponent(key) + "=" + Utils.encodeURIComponent(measurements.get(key)));
 		}
